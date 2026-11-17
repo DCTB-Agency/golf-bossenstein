@@ -1,0 +1,24 @@
+{
+  "course": "Bossenstein Golf & Polo Club – Championship",
+  "note": "Par per hole volgens publieke scorekaart. Tee/green-posities nog in te tekenen via de editor (of op het terrein met GPS). Coördinaten: [lon, lat].",
+  "holes": [
+    { "no": 1, "par": 4, "tee": null, "green": null, "via": [] },
+    { "no": 2, "par": 4, "tee": null, "green": null, "via": [] },
+    { "no": 3, "par": 3, "tee": null, "green": null, "via": [] },
+    { "no": 4, "par": 4, "tee": null, "green": null, "via": [] },
+    { "no": 5, "par": 3, "tee": null, "green": null, "via": [] },
+    { "no": 6, "par": 4, "tee": null, "green": null, "via": [] },
+    { "no": 7, "par": 5, "tee": null, "green": null, "via": [] },
+    { "no": 8, "par": 3, "tee": null, "green": null, "via": [] },
+    { "no": 9, "par": 4, "tee": null, "green": null, "via": [] },
+    { "no": 10, "par": 4, "tee": null, "green": null, "via": [] },
+    { "no": 11, "par": 4, "tee": null, "green": null, "via": [] },
+    { "no": 12, "par": 5, "tee": null, "green": null, "via": [] },
+    { "no": 13, "par": 4, "tee": null, "green": null, "via": [] },
+    { "no": 14, "par": 3, "tee": null, "green": null, "via": [] },
+    { "no": 15, "par": 4, "tee": null, "green": null, "via": [] },
+    { "no": 16, "par": 5, "tee": null, "green": null, "via": [] },
+    { "no": 17, "par": 4, "tee": null, "green": null, "via": [] },
+    { "no": 18, "par": 4, "tee": null, "green": null, "via": [] }
+  ]
+}

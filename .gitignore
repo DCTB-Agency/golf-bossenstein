@@ -1,0 +1,6 @@
+node_modules
+dist
+raw/*.multipart
+raw/*.tif
+raw/tiles
+.DS_Store

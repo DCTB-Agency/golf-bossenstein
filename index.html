@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f2a1d" />
+  <title>Bossenstein 3D</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <div>
+        <strong>Bossenstein</strong>
+        <small>Championship · par 71</small>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="btn-overview" title="Overzicht">Overzicht</button>
+      <button id="btn-gps" title="Mijn locatie">📍 GPS</button>
+      <button id="btn-edit" title="Holes intekenen">✎ Intekenen</button>
+    </div>
+  </header>
+
+  <aside class="panel" id="hole-panel">
+    <div class="hole-head">
+      <button id="prev" aria-label="Vorige hole">‹</button>
+      <div class="hole-title">
+        <span>Hole</span>
+        <strong id="hole-no">–</strong>
+      </div>
+      <button id="next" aria-label="Volgende hole">›</button>
+    </div>
+    <div class="stats">
+      <div><small>Par</small><b id="hole-par">–</b></div>
+      <div><small>Lengte</small><b id="hole-len">–</b></div>
+      <div><small>Tot green</small><b id="hole-togo">–</b></div>
+    </div>
+    <div class="editor" id="editor" hidden>
+      <p>Klik op de knop en daarna op de kaart.</p>
+      <div class="row">
+        <button data-place="tee">Tee plaatsen</button>
+        <button data-place="green">Green plaatsen</button>
+        <button data-place="dogleg">+ Knikpunt</button>
+      </div>
+      <div class="row">
+        <button id="clear-hole">Wis hole</button>
+        <button id="export">Exporteer JSON</button>
+      </div>
+    </div>
+  </aside>
+
+  <nav class="holes" id="hole-strip"></nav>
+
+  <div class="toast" id="toast" hidden></div>
+  <footer class="attrib" id="attrib"></footer>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
