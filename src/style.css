@@ -140,6 +140,7 @@ body.staging .brand strong::after {
   .mbar .cta .badge { display: inline-block; min-width: 20px; margin-left: 4px; padding: 1px 6px; border-radius: 999px; background: #1b1b1b; color: var(--accent); font-size: 12px; }
 
   .sheet { display: block; position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,0); transition: background .2s; }
+  .sheet[hidden] { display: none; } /* anders blokkeert de onzichtbare laag alle tikken */
   .sheet.open { background: rgba(0,0,0,.35); }
   .sheet-card {
     position: absolute; left: 0; right: 0; bottom: 0; max-height: 78vh; display: flex; flex-direction: column;
