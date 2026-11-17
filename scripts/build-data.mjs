@@ -151,11 +151,33 @@ for (const f of grb.features) {
     const area = polyArea(pts), obb = obbOf(pts);
     const rect = area / (obb.len * obb.wid);
     const pitched = hR - hE > 1.3 && rect > 0.82 && obb.wid > 4 && obb.wid < 22;
+    const [ccx, ccz] = [pts.reduce((s, q) => s + q[0], 0) / pts.length, pts.reduce((s, q) => s + q[1], 0) / pts.length];
+    const role = area > 800 && ccx > -60 && ccx < 60 && ccz > -180 && ccz < -80 ? 'castle'
+      : ccx > 90 && ccx < 200 && ccz > -490 && ccz < -400 ? 'club' : undefined;
+    // kasteel: binnenplaats drukt het percentiel; goothoogte van de vleugels volgens de gevelfoto's
+    if (role === 'castle') hE = Math.max(hE, 10.5);
+    // complexe gebouwen met een echt dak: dakvorm als raster uit het DSM (1 m)
+    let grid;
+    if (!pitched && area > 60 && (hR - hE > 0.8 || role === 'castle')) {
+      const STEP = 1;
+      const xs = pts.map((q) => q[0]), zs = pts.map((q) => q[1]);
+      const gx0 = Math.floor(Math.min(...xs)), gz0 = Math.floor(Math.min(...zs));
+      const nx = Math.ceil(Math.max(...xs) - gx0) + 1, nz = Math.ceil(Math.max(...zs) - gz0) + 1;
+      const hts = [];
+      for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+        const x = gx0 + i * STEP, z = gz0 + j * STEP;
+        if (!inPoly(x, z, pts)) { hts.push(-1); continue; }
+        const v = bilinear(dsm, lon0 + x / MX, lat0 - z / MZ) - base;
+        hts.push(isNaN(v) ? -1 : +Math.max(role === 'castle' ? 0.5 : hE, Math.min(v, hR + 1)).toFixed(1));
+      }
+      grid = { x0: gx0, z0: gz0, s: STEP, nx, nz, h: hts };
+    }
     buildings.push({
       p: pts.map(([x, z]) => [+x.toFixed(2), +z.toFixed(2)]),
-      b: +base.toFixed(2), e: +(pitched ? hE : (hE + hR) / 2).toFixed(2), r: +hR.toFixed(2),
-      roof: pitched ? 'gable' : 'flat',
+      b: +base.toFixed(2), e: +(pitched || grid ? hE : (hE + hR) / 2).toFixed(2), r: +hR.toFixed(2),
+      roof: pitched ? 'gable' : grid ? 'dsm' : 'flat',
       obb: pitched ? [+obb.cx.toFixed(2), +obb.cz.toFixed(2), +obb.ang.toFixed(4), +obb.len.toFixed(2), +obb.wid.toFixed(2)] : undefined,
+      grid, role,
       t: type,
     });
   }
@@ -241,6 +263,6 @@ fs.writeFileSync(`${out}/meta.json`, JSON.stringify({
   buildings: 'buildings.json',
   trees: { file: 'trees.bin', stride: 8, count: trees.length / 8 },
   features: feats,
-  attribution: 'Luchtfoto (zomer 2024), hoogtemodel & GRB © Digitaal Vlaanderen (CC-BY 4.0) · Kaartdata © OpenStreetMap-bijdragers (ODbL)',
+  attribution: 'Luchtfoto (zomer 2024), hoogtemodel & GRB © Digitaal Vlaanderen (CC-BY 4.0) · Kaartdata © OpenStreetMap-bijdragers (ODbL) · Kasteelgevels: Zairon, CC BY-SA 4.0 (Wikimedia Commons)',
 }));
 console.log({ N, lo: lo.toFixed(1), hi: hi.toFixed(1), buildings: buildings.length, gable: buildings.filter((b) => b.roof === 'gable').length, trees: trees.length / 8, conifers: nCon });

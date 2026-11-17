@@ -141,63 +141,116 @@ export async function buildWorld({ scene, renderer, meta, heights, exag, groundY
     const p = g.attributes.position, uv = g.attributes.uv;
     for (let k = 0; k < p.count; k++) uv.setXY(k, p.getX(k), p.getZ(k));
     // waterpeil net boven het hoogste maaiveld binnen de vijver (DTM is over water geïnterpoleerd)
-    let level = -Infinity;
-    for (let k = 0; k < p.count; k++) level = Math.max(level, groundY(p.getX(k), p.getZ(k)));
+    // (laag percentiel: een grachtcontour kan een eiland omvatten, zoals bij het kasteel)
     const xs = pts.map((q) => q[0]), zs = pts.map((q) => q[1]);
     const inside = (x, z) => { let c = false; for (let a = 0, b = pts.length - 1; a < pts.length; b = a++) { const [xi, zi] = pts[a], [xj, zj] = pts[b]; if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) c = !c; } return c; };
+    const samples = [];
     for (let x = Math.min(...xs); x <= Math.max(...xs); x += 2) for (let z = Math.min(...zs); z <= Math.max(...zs); z += 2)
-      if (inside(x, z)) level = Math.max(level, groundY(x, z));
+      if (inside(x, z)) samples.push(groundY(x, z));
+    samples.sort((a, b) => a - b);
+    const level = samples.length ? samples[Math.floor(samples.length * 0.35)] : Math.min(...pts.map(([x, z]) => groundY(x, z)));
     const m = new THREE.Mesh(g, waterMat);
     m.position.y = level + 0.12; m.receiveShadow = true;
     scene.add(m);
   }
 
-  // ---------- gebouwen: GRB-contour, muren tot dakgoot, dak uit DSM, dakfoto uit luchtfoto ----------
+  // ---------- gebouwen: GRB-contour, gevelfoto's, dak uit DSM met luchtfoto ----------
   const buildings = await (await fetch('/data/' + meta.buildings)).json();
-  const wallTex = (() => { // gevel: baksteen + ramen per travee van 3 m
+  const wallTex = (() => { // eenvoudige gevel voor bijgebouwen: baksteen + raam per travee van 3 m
     const c = document.createElement('canvas'); c.width = c.height = 256;
     const x = c.getContext('2d');
     x.fillStyle = '#ffffff'; x.fillRect(0, 0, 256, 256);
-    for (let r = 0; r < 64; r++) for (let k = 0; k < 16; k++) { // voegwerk
+    for (let r = 0; r < 64; r++) for (let k = 0; k < 16; k++) {
       x.fillStyle = `rgba(0,0,0,${0.04 + ((r * 7 + k * 13) % 5) * 0.012})`;
       x.fillRect(((k * 16) + (r % 2) * 8) % 256, r * 4, 15, 3);
     }
-    x.fillStyle = '#2b3237'; x.fillRect(84, 70, 88, 110);           // raam
-    x.fillStyle = 'rgba(160,190,210,0.35)'; x.fillRect(90, 76, 76, 46); // reflectie
-    x.strokeStyle = '#e9e5dc'; x.lineWidth = 6; x.strokeRect(84, 70, 88, 110);
-    x.beginPath(); x.moveTo(128, 70); x.lineTo(128, 180); x.moveTo(84, 125); x.lineTo(172, 125); x.stroke();
+    x.fillStyle = '#2b3237'; x.fillRect(96, 90, 64, 70);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = maxAniso;
     return t;
   })();
+  const facade = async (name, repeat) => {
+    const t = await loader.loadAsync(`/data/facades/${name}.jpg`);
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso;
+    t.wrapS = repeat ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping; t.wrapT = repeat ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
+    return t;
+  };
+  const [houseTex, castleN, castleS, castleE, castleW] = await Promise.all(
+    [facade('wall_house', true), facade('castle_n'), facade('castle_s'), facade('castle_e'), facade('castle_w')]);
   const roofTex = prepTex(mosaic.clone()); roofTex.needsUpdate = true;
-  const palettes = ['#9c5b45', '#a8674e', '#8e4f3c', '#c9b79c', '#e6e0d4', '#b9a58a', '#7d6a5a', '#d8d2c6'];
-  const walls = [], roofs = [];
+  const shedPalette = ['#9c5b45', '#8e4f3c', '#7d6a5a', '#b9a58a', '#d8d2c6'];
+  const housePalette = ['#ffffff', '#f4ece6', '#ffffff', '#efe4dc', '#fbf3ee'];
+  const houseWalls = [], shedWalls = [], roofs = [], slateRoofs = [];
+  const castleWalls = { n: [], s: [], e: [], w: [] };
   const uvWorld = (x, z) => [(x - minX) / W, 1 - (z - minZ) / D];
   const hash = (s) => { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) | 0; return Math.abs(h); };
-  for (const [bi, b] of buildings.entries()) {
-    const base = (b.b - H0) * exag - 0.6;
-    const eave = (b.b - H0) * exag + b.e, ridge = (b.b - H0) * exag + b.r;
-    const shed = /bijgebouw|afdak/i.test(b.t);
-    const col = new THREE.Color(palettes[hash(bi + b.t) % (shed ? 3 : palettes.length) + (shed ? 5 : 0)] || palettes[0]);
-    // muren
-    const pos = [], uv = [], colArr = [];
-    let run = 0;
-    const p = b.p;
-    for (let k = 0; k < p.length; k++) {
-      const [x1, z1] = p[k], [x2, z2] = p[(k + 1) % p.length];
-      const len = Math.hypot(x2 - x1, z2 - z1);
-      const u0 = run / 3, u1 = (run + len) / 3, v0 = 0, v1 = (eave - base) / 3;
-      pos.push(x1, base, z1, x2, base, z2, x2, eave, z2, x1, base, z1, x2, eave, z2, x1, eave, z1);
-      uv.push(u0, v0, u1, v0, u1, v1, u0, v0, u1, v1, u0, v1);
-      for (let q = 0; q < 6; q++) colArr.push(col.r, col.g, col.b);
-      run += len;
+  const quadWall = (arr, x1, z1, x2, z2, y0, y1, uv, col) => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([x1, y0, z1, x2, y0, z2, x2, y1, z2, x1, y0, z1, x2, y1, z2, x1, y1, z1], 3));
+    const [u0, u1, v0, v1] = uv;
+    g.setAttribute('uv', new THREE.Float32BufferAttribute([u0, v0, u1, v0, u1, v1, u0, v0, u1, v1, u0, v1], 2));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(Array(6).fill([col.r, col.g, col.b]).flat(), 3));
+    arr.push(g);
+  };
+  const pointInPoly = (x, z, poly) => {
+    let c = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const [xi, zi] = poly[i], [xj, zj] = poly[j];
+      if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) c = !c;
     }
-    const wg = new THREE.BufferGeometry();
-    wg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    wg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-    wg.setAttribute('color', new THREE.Float32BufferAttribute(colArr, 3));
-    walls.push(wg);
+    return c;
+  };
+
+  for (const [bi, b] of buildings.entries()) {
+    const g0 = (b.b - H0) * exag;
+    const base = g0 - 0.6, eave = g0 + b.e, ridge = g0 + b.r;
+    const shed = /bijgebouw|afdak/i.test(b.t) && b.role !== 'club';
+    const col = new THREE.Color(shed ? shedPalette[hash(bi) % shedPalette.length] : housePalette[hash(bi) % housePalette.length]);
+    const p = b.p;
+
+    if (b.role === 'castle') {
+      // vier gevelfoto's, elk op de muren die naar die kant kijken; u langs de gevel, v van water tot dakgoot.
+      // hoofdassen van het kasteel (dubbele-hoek-gemiddelde van de muurrichtingen, gewogen naar lengte)
+      let sc2 = 0, ss2 = 0;
+      for (let k = 0; k < p.length; k++) {
+        const [x1, z1] = p[k], [x2, z2] = p[(k + 1) % p.length], a = Math.atan2(z2 - z1, x2 - x1), l = Math.hypot(x2 - x1, z2 - z1);
+        sc2 += Math.cos(2 * a) * l; ss2 += Math.sin(2 * a) * l;
+      }
+      const ax = Math.atan2(ss2, sc2) / 2;
+      const axes = [[Math.cos(ax), Math.sin(ax)], [-Math.sin(ax), Math.cos(ax)]];
+      const dirs = [axes[0], axes[1], [-axes[0][0], -axes[0][1]], [-axes[1][0], -axes[1][1]]];
+      const worldSide = ([nx, nz]) => Math.abs(nx) > Math.abs(nz) ? (nx > 0 ? 'e' : 'w') : (nz > 0 ? 's' : 'n');
+      const ext = {};
+      for (const n of dirs) {
+        const right = [n[1], -n[0]]; // kijkrichting d = -n, rechts = (-d.z, d.x)
+        const proj = p.map(([x, z]) => x * right[0] + z * right[1]);
+        ext[worldSide(n)] = { n, right, min: Math.min(...proj), max: Math.max(...proj) };
+      }
+      for (let k = 0; k < p.length; k++) {
+        const [x1, z1] = p[k], [x2, z2] = p[(k + 1) % p.length];
+        const len = Math.hypot(x2 - x1, z2 - z1); if (len < 0.2) continue;
+        let nx = (z2 - z1) / len, nz = -(x2 - x1) / len;
+        if (pointInPoly((x1 + x2) / 2 + nx * 0.5, (z1 + z2) / 2 + nz * 0.5, p)) { nx = -nx; nz = -nz; } // naar buiten richten
+        // kies de hoofdrichting die het best overeenkomt met deze muur
+        let best = null, bd = -2;
+        for (const s of Object.values(ext)) { const d = s.n[0] * nx + s.n[1] * nz; if (d > bd) { bd = d; best = s; } }
+        const side = worldSide(best.n);
+        const { right, min, max } = ext[side];
+        const u1 = (x1 * right[0] + z1 * right[1] - min) / (max - min), u2 = (x2 * right[0] + z2 * right[1] - min) / (max - min);
+        quadWall(castleWalls[side], x1, z1, x2, z2, base, eave, [u1, u2, 0, 1], new THREE.Color('#ffffff'));
+      }
+    } else {
+      // gewone muren: fotogevel (6,4 m × 2,9 m per tegel) of eenvoudige gevel voor bijgebouwen
+      const [tw, th] = shed ? [3, 3] : [6.4, 2.9];
+      let run = 0;
+      for (let k = 0; k < p.length; k++) {
+        const [x1, z1] = p[k], [x2, z2] = p[(k + 1) % p.length];
+        const len = Math.hypot(x2 - x1, z2 - z1);
+        quadWall(shed ? shedWalls : houseWalls, x1, z1, x2, z2, base, eave, [run / tw, (run + len) / tw, -0.6 / th, (eave - base - 0.6) / th], col);
+        run += len;
+      }
+    }
+
     // dak
     if (b.roof === 'gable' && b.obb) {
       const [cx, cz, ang, len, wid] = b.obb, o = 0.35;
@@ -211,30 +264,71 @@ export async function buildWorld({ scene, renderer, meta, heights, exag, groundY
       rg.setAttribute('position', new THREE.Float32BufferAttribute(tri.flat(), 3));
       rg.setAttribute('uv', new THREE.Float32BufferAttribute(tri.flatMap(([x, , z]) => uvWorld(x, z)), 2));
       roofs.push(rg);
-      // topgevels (driehoeken) in muurmateriaal
       const gL = [P(-len / 2, -wid / 2, eave), P(-len / 2, wid / 2, eave), P(-len / 2, 0, ridge)];
       const gR = [P(len / 2, wid / 2, eave), P(len / 2, -wid / 2, eave), P(len / 2, 0, ridge)];
       const gg = new THREE.BufferGeometry();
       gg.setAttribute('position', new THREE.Float32BufferAttribute([...gL, ...gR].flat(), 3));
-      gg.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, wid / 3, 0, wid / 6, (ridge - eave) / 3, 0, 0, wid / 3, 0, wid / 6, (ridge - eave) / 3], 2));
+      const [tw, th] = shed ? [3, 3] : [6.4, 2.9];
+      gg.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, wid / tw, 0, wid / tw / 2, (ridge - eave) / th, 0, 0, wid / tw, 0, wid / tw / 2, (ridge - eave) / th], 2));
       gg.setAttribute('color', new THREE.Float32BufferAttribute(Array(6).fill([col.r, col.g, col.b]).flat(), 3));
-      walls.push(gg);
+      (shed ? shedWalls : houseWalls).push(gg);
     } else {
+      // plat deksel op goothoogte (vult ook de randen onder een DSM-dak)
       const sg = new THREE.ShapeGeometry(shapeOf(p));
       sg.rotateX(-Math.PI / 2);
       sg.translate(0, eave, 0);
       const sp = sg.attributes.position, su = sg.attributes.uv;
       for (let k = 0; k < sp.count; k++) su.setXY(k, ...uvWorld(sp.getX(k), sp.getZ(k)));
       roofs.push(sg.toNonIndexed());
+      if (b.roof === 'dsm' && b.grid) {
+        // echte dakvorm: 1 m-raster uit het hoogtemodel
+        const { x0, z0, s, nx, nz } = b.grid, pos = [], uv = [];
+        // 3×3 uitvlakken: haalt de trapjes van het 1 m-raster weg
+        const h = b.grid.h.map((v, k) => {
+          if (v < 0) return -1;
+          const i = k % nx, j = Math.floor(k / nx); let sum = 0, n = 0;
+          for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+            const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= nx || jj >= nz) continue;
+            const w = b.grid.h[jj * nx + ii]; if (w >= 0) { sum += w; n++; }
+          }
+          return sum / n;
+        });
+        const Y = (i, j) => { const v = h[j * nx + i]; return v < 0 ? null : g0 + v; };
+        for (let j = 0; j < nz - 1; j++) for (let i = 0; i < nx - 1; i++) {
+          const a = Y(i, j), bb = Y(i + 1, j), c = Y(i + 1, j + 1), d = Y(i, j + 1);
+          if (a === null || bb === null || c === null || d === null) continue;
+          const xa = x0 + i * s, za = z0 + j * s, xb = xa + s, zb = za + s;
+          const quad = [[xa, a + 0.05, za], [xb, bb + 0.05, za], [xb, c + 0.05, zb], [xa, a + 0.05, za], [xb, c + 0.05, zb], [xa, d + 0.05, zb]];
+          for (const q of quad) { pos.push(...q); uv.push(...uvWorld(q[0], q[2])); }
+        }
+        if (pos.length) {
+          const hg = new THREE.BufferGeometry();
+          hg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+          hg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+          (b.role === 'castle' ? slateRoofs : roofs).push(hg);
+        }
+      }
     }
   }
   const prepMerged = (arr) => {
     const g = mergeGeometries(arr.map((g) => { const n = g.index ? g.toNonIndexed() : g; n.deleteAttribute('normal'); return n; }));
     g.computeVertexNormals(); return g;
   };
-  const wallMesh = new THREE.Mesh(prepMerged(walls), new THREE.MeshStandardMaterial({ map: wallTex, vertexColors: true, roughness: 0.9, side: THREE.DoubleSide }));
-  const roofMesh = new THREE.Mesh(prepMerged(roofs), new THREE.MeshStandardMaterial({ map: roofTex, roughness: 0.75, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1 }));
-  for (const m of [wallMesh, roofMesh]) { m.castShadow = m.receiveShadow = true; scene.add(m); }
+  const addMesh = (arr, mat) => {
+    if (!arr.length) return;
+    const m = new THREE.Mesh(prepMerged(arr), mat);
+    m.castShadow = m.receiveShadow = true; scene.add(m);
+  };
+  const wallMat = (map, vc = true) => new THREE.MeshStandardMaterial({ map, vertexColors: vc, roughness: 0.88, side: THREE.DoubleSide, envMapIntensity: 0.4 });
+  addMesh(houseWalls, wallMat(houseTex));
+  addMesh(shedWalls, wallMat(wallTex));
+  addMesh(castleWalls.n, wallMat(castleN, false));
+  addMesh(castleWalls.s, wallMat(castleS, false));
+  addMesh(castleWalls.e, wallMat(castleE, false));
+  addMesh(castleWalls.w, wallMat(castleW, false));
+  // kasteel: leien daken (zoals op de foto's), zonder uitgerekte luchtfoto op steile vlakken
+  addMesh(slateRoofs, new THREE.MeshStandardMaterial({ color: '#3a414d', roughness: 0.55, metalness: 0.05, side: THREE.DoubleSide, envMapIntensity: 0.9 }));
+  addMesh(roofs, new THREE.MeshStandardMaterial({ map: roofTex, roughness: 0.75, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, envMapIntensity: 0.5 }));
 
   // ---------- bomen: echte positie, hoogte, kroonbreedte en fotokleur ----------
   const trees = new Float32Array(await (await fetch('/data/' + meta.trees.file)).arrayBuffer());
