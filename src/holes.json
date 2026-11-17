@@ -44,9 +44,21 @@
         "LRE": 192
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h1.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.5969334,
+        51.1949334
+      ],
+      "green": [
+        4.5998288,
+        51.1953223
+      ],
+      "via": [
+        [
+          4.5990117,
+          51.1955303
+        ]
+      ],
+      "status": "bevestigd door gebruiker (ankerpunten)"
     },
     {
       "no": 2,
