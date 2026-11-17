@@ -36,10 +36,16 @@
     </div>
     <div class="stats">
       <div><small>Par</small><b id="hole-par">–</b></div>
+      <div><small>SI</small><b id="hole-si">–</b></div>
       <div><small>Lengte</small><b id="hole-len">–</b></div>
       <div><small>Tot green</small><b id="hole-togo">–</b></div>
     </div>
+    <label class="tee-pick">Tee
+      <select id="tee-select"></select>
+    </label>
     <div class="editor" id="editor" hidden>
+      <a id="drawing-link" target="_blank" rel="noopener"><img id="drawing" alt="Officiële hole-tekening" /></a>
+      <p id="measure" class="measure">Nog niet ingetekend</p>
       <p>Klik op de knop en daarna op de kaart.</p>
       <div class="row">
         <button data-place="tee">Tee plaatsen</button>

@@ -1,24 +1,307 @@
 {
-  "course": "Bossenstein Golf & Polo Club – Championship",
-  "note": "Par per hole volgens publieke scorekaart. Tee/green-posities nog in te tekenen via de editor (of op het terrein met GPS). Coördinaten: [lon, lat].",
+  "course": "Bossenstein Golf & Polo Club – Championship Course",
+  "source": "https://bossenstein.be/course/ + officiële scorekaart (Scorekaart-C.C.pdf)",
+  "note": "Lengtes in meter. Tee/green-posities [lon, lat] nog in te tekenen: de luchtfoto alleen is niet eenduidig (Championship en Executive Course liggen door elkaar).",
+  "tees": [
+    {
+      "id": "MWH",
+      "name": "Heren wit",
+      "color": "#ffffff",
+      "cr": 70.9,
+      "sr": 129
+    },
+    {
+      "id": "MYE",
+      "name": "Heren geel",
+      "color": "#f2d21b",
+      "cr": 68.7,
+      "sr": 120
+    },
+    {
+      "id": "LBL",
+      "name": "Dames blauw",
+      "color": "#2a6fc9",
+      "cr": 71.7,
+      "sr": 124
+    },
+    {
+      "id": "LRE",
+      "name": "Dames rood",
+      "color": "#d23c3c",
+      "cr": 69.4,
+      "sr": 120
+    }
+  ],
   "holes": [
-    { "no": 1, "par": 4, "tee": null, "green": null, "via": [] },
-    { "no": 2, "par": 4, "tee": null, "green": null, "via": [] },
-    { "no": 3, "par": 3, "tee": null, "green": null, "via": [] },
-    { "no": 4, "par": 4, "tee": null, "green": null, "via": [] },
-    { "no": 5, "par": 3, "tee": null, "green": null, "via": [] },
-    { "no": 6, "par": 4, "tee": null, "green": null, "via": [] },
-    { "no": 7, "par": 5, "tee": null, "green": null, "via": [] },
-    { "no": 8, "par": 3, "tee": null, "green": null, "via": [] },
-    { "no": 9, "par": 4, "tee": null, "green": null, "via": [] },
-    { "no": 10, "par": 4, "tee": null, "green": null, "via": [] },
-    { "no": 11, "par": 4, "tee": null, "green": null, "via": [] },
-    { "no": 12, "par": 5, "tee": null, "green": null, "via": [] },
-    { "no": 13, "par": 4, "tee": null, "green": null, "via": [] },
-    { "no": 14, "par": 3, "tee": null, "green": null, "via": [] },
-    { "no": 15, "par": 4, "tee": null, "green": null, "via": [] },
-    { "no": 16, "par": 5, "tee": null, "green": null, "via": [] },
-    { "no": 17, "par": 4, "tee": null, "green": null, "via": [] },
-    { "no": 18, "par": 4, "tee": null, "green": null, "via": [] }
+    {
+      "no": 1,
+      "par": 4,
+      "si": 18,
+      "length": {
+        "MWH": 245,
+        "MYE": 226,
+        "LBL": 200,
+        "LRE": 192
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h1.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 2,
+      "par": 4,
+      "si": 8,
+      "length": {
+        "MWH": 408,
+        "MYE": 301,
+        "LBL": 290,
+        "LRE": 266
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h2.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 3,
+      "par": 3,
+      "si": 16,
+      "length": {
+        "MWH": 118,
+        "MYE": 118,
+        "LBL": 109,
+        "LRE": 109
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h3.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 4,
+      "par": 4,
+      "si": 12,
+      "length": {
+        "MWH": 335,
+        "MYE": 316,
+        "LBL": 285,
+        "LRE": 265
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h4.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 5,
+      "par": 3,
+      "si": 10,
+      "length": {
+        "MWH": 172,
+        "MYE": 164,
+        "LBL": 136,
+        "LRE": 125
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h5.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 6,
+      "par": 4,
+      "si": 4,
+      "length": {
+        "MWH": 360,
+        "MYE": 345,
+        "LBL": 329,
+        "LRE": 315
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h6.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 7,
+      "par": 5,
+      "si": 2,
+      "length": {
+        "MWH": 500,
+        "MYE": 470,
+        "LBL": 440,
+        "LRE": 425
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h7.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 8,
+      "par": 3,
+      "si": 14,
+      "length": {
+        "MWH": 114,
+        "MYE": 114,
+        "LBL": 108,
+        "LRE": 108
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h8.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 9,
+      "par": 4,
+      "si": 6,
+      "length": {
+        "MWH": 382,
+        "MYE": 352,
+        "LBL": 318,
+        "LRE": 247
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h9.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 10,
+      "par": 4,
+      "si": 1,
+      "length": {
+        "MWH": 381,
+        "MYE": 376,
+        "LBL": 345,
+        "LRE": 313
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h10.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 11,
+      "par": 4,
+      "si": 5,
+      "length": {
+        "MWH": 350,
+        "MYE": 332,
+        "LBL": 319,
+        "LRE": 287
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h11.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 12,
+      "par": 5,
+      "si": 7,
+      "length": {
+        "MWH": 460,
+        "MYE": 439,
+        "LBL": 418,
+        "LRE": 375
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h12.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 13,
+      "par": 4,
+      "si": 9,
+      "length": {
+        "MWH": 379,
+        "MYE": 353,
+        "LBL": 312,
+        "LRE": 284
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h13.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 14,
+      "par": 3,
+      "si": 11,
+      "length": {
+        "MWH": 175,
+        "MYE": 150,
+        "LBL": 143,
+        "LRE": 123
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h14.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 15,
+      "par": 4,
+      "si": 17,
+      "length": {
+        "MWH": 286,
+        "MYE": 269,
+        "LBL": 229,
+        "LRE": 201
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h15.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 16,
+      "par": 5,
+      "si": 15,
+      "length": {
+        "MWH": 427,
+        "MYE": 385,
+        "LBL": 340,
+        "LRE": 330
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h16.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 17,
+      "par": 4,
+      "si": 13,
+      "length": {
+        "MWH": 346,
+        "MYE": 337,
+        "LBL": 311,
+        "LRE": 303
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h17.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    },
+    {
+      "no": 18,
+      "par": 4,
+      "si": 3,
+      "length": {
+        "MWH": 354,
+        "MYE": 328,
+        "LBL": 312,
+        "LRE": 311
+      },
+      "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h18.jpg",
+      "tee": null,
+      "green": null,
+      "via": []
+    }
   ]
 }

@@ -158,12 +158,28 @@ let current = 0;
 const holeGroup = new THREE.Group();
 scene.add(holeGroup);
 
+// officiële data uit holes.json, posities uit localStorage (als die er zijn) eroverheen
 function loadHoles() {
+  const holes = structuredClone(holesData.holes);
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
-    if (saved?.length === 18) return saved;
+    if (saved?.length === 18) saved.forEach((s, i) => {
+      if (s.tee || s.green) Object.assign(holes[i], { tee: s.tee, green: s.green, via: s.via || [] });
+    });
   } catch {}
-  return structuredClone(holesData.holes);
+  return holes;
+}
+const TEES = holesData.tees;
+let teeId = (() => { try { return localStorage.getItem('bossenstein.tee') || 'MWH'; } catch { return 'MWH'; } })();
+{
+  const sel = $('tee-select');
+  sel.innerHTML = TEES.map((t) => `<option value="${t.id}">${t.name} — CR ${t.cr} / SR ${t.sr}</option>`).join('');
+  sel.value = teeId;
+  sel.onchange = () => {
+    teeId = sel.value;
+    try { localStorage.setItem('bossenstein.tee', teeId); } catch {}
+    updatePanel();
+  };
 }
 function saveHoles() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(holes)); } catch {}
@@ -228,7 +244,7 @@ function renderHoles() {
       holeGroup.add(tube);
       if (active) {
         const mid = pts[Math.floor(pts.length / 2)].clone(); mid.y += 6;
-        holeGroup.add(label(`${Math.round(holeLength(h))} m`, '', mid));
+        holeGroup.add(label(`${Math.round(holeLength(h))} m gemeten`, '', mid));
       }
     }
     (h.via || []).forEach((p) => {
@@ -244,8 +260,21 @@ function updatePanel() {
   const h = holes[current];
   $('hole-no').textContent = h.no;
   $('hole-par').textContent = h.par ?? '–';
+  $('hole-si').textContent = h.si ?? '–';
+  const official = h.length?.[teeId];
+  $('hole-len').textContent = official ? `${official} m` : '–';
+  // editor: officiële tekening + gemeten lengte vs scorekaart (witte tee = verste)
   const len = holeLength(h);
-  $('hole-len').textContent = len ? `${Math.round(len)} m` : '–';
+  if ($('drawing').dataset.no !== String(h.no)) {
+    $('drawing').src = h.drawing; $('drawing').dataset.no = h.no; $('drawing-link').href = h.drawing;
+  }
+  const m = $('measure'), ref = h.length?.MWH;
+  if (!len) { m.textContent = `Nog niet ingetekend · doel ${ref} m (wit)`; m.className = 'measure'; }
+  else {
+    const diff = Math.round(len - ref);
+    m.textContent = `Gemeten ${Math.round(len)} m · scorekaart ${ref} m (wit) · ${diff >= 0 ? '+' : ''}${diff} m`;
+    m.className = 'measure ' + (Math.abs(diff) <= Math.max(8, ref * 0.04) ? 'ok' : 'off');
+  }
   $('hole-togo').textContent = me && h.green ? `${Math.round(geo.distance(me, h.green))} m` : '–';
   const strip = $('hole-strip');
   if (!strip.children.length) {
