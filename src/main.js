@@ -194,17 +194,24 @@ function addBriefingMarkers(h) {
   }
 }
 
+let briefingOpen = null;
 function renderBriefing(h) {
   const el = $('briefing');
   const a = analyzeHole({ hole: h, geo, data: briefingData, realHeight, me });
   if (!a) { el.innerHTML = '<p class="muted">Teken tee en green in om de briefing te zien.</p>'; return; }
   const row = (r) => `<li class="${r.tone || ''}"><span class="ic">${r.icon}</span><span>${r.text}${r.sub ? `<small>${r.sub}</small>` : ''}</span></li>`;
+  // inklapbaar: op gsm standaard dicht zodat de baan zichtbaar blijft; keuze blijft bewaard
+  if (briefingOpen === null) briefingOpen = !matchMedia('(max-width: 640px)').matches;
+  const count = a.lines.length + a.green.filter((g) => g.tone !== 'ok').length;
   el.innerHTML = `
-    <div class="b-head"><strong>Hole-briefing</strong><span>${a.stars ? '★'.repeat(a.stars) + '☆'.repeat(5 - a.stars) : ''}</span></div>
-    <p class="muted">${a.fromMe ? `Afstanden vanaf jouw positie (nog ${Math.round(a.L - a.s0)} m)` : `Afstanden vanaf de tee · ${Math.round(a.L)} m langs de speellijn`}</p>
-    ${a.lines.length ? `<ul>${a.lines.map(row).join('')}</ul>` : '<p class="muted">Geen water of bunkers in de speellijn.</p>'}
-    <div class="b-sub">Rond de green</div><ul>${a.green.map(row).join('')}</ul>
-    <div class="b-sub">Speltips</div><ul class="tips">${a.tips.map((t) => `<li>${t}</li>`).join('')}</ul>`;
+    <details ${briefingOpen ? 'open' : ''}>
+      <summary class="b-head"><strong>Hole-briefing <em>${count} aandachtspunt${count === 1 ? '' : 'en'}</em></strong><span>${a.stars ? '★'.repeat(a.stars) + '☆'.repeat(5 - a.stars) : ''}</span></summary>
+      <p class="muted">${a.fromMe ? `Afstanden vanaf jouw positie (nog ${Math.round(a.L - a.s0)} m)` : `Afstanden vanaf de tee · ${Math.round(a.L)} m langs de speellijn`}</p>
+      ${a.lines.length ? `<ul>${a.lines.map(row).join('')}</ul>` : '<p class="muted">Geen water of bunkers in de speellijn.</p>'}
+      <div class="b-sub">Rond de green</div><ul>${a.green.map(row).join('')}</ul>
+      <div class="b-sub">Speltips</div><ul class="tips">${a.tips.map((t) => `<li>${t}</li>`).join('')}</ul>
+    </details>`;
+  el.querySelector('details').addEventListener('toggle', (e) => { briefingOpen = e.target.open; });
 }
 
 function updatePanel() {

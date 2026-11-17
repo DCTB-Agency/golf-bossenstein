@@ -54,7 +54,11 @@ button.active { background: var(--accent); color: #1b1b1b; border-color: transpa
 .panel { max-height: calc(100vh - 190px); overflow-y: auto; scrollbar-width: thin; }
 .topbar, .panel, .holes, .toast { z-index: 10; }
 .briefing { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; font-size: 12.5px; }
-.briefing .b-head { display: flex; justify-content: space-between; align-items: baseline; }
+.briefing .b-head { display: flex; justify-content: space-between; align-items: baseline; cursor: pointer; list-style: none; }
+.briefing .b-head::-webkit-details-marker { display: none; }
+.briefing .b-head strong::before { content: '▸ '; color: var(--muted); }
+.briefing details[open] .b-head strong::before { content: '▾ '; }
+.briefing .b-head em { font-style: normal; font-weight: 400; color: var(--muted); font-size: 11px; margin-left: 4px; }
 .briefing .b-head span { color: var(--accent); letter-spacing: 1px; }
 .briefing .b-sub { margin: 10px 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 .briefing .muted { color: var(--muted); margin: 3px 0 6px; font-size: 11.5px; }
