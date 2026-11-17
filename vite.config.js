@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite';
-export default defineConfig({
-  build: { target: 'es2022' },
+// GitHub Pages serveert de app onder /golf-bossenstein/
+export default defineConfig(({ command, isPreview }) => ({
+  base: command === 'build' || isPreview ? '/golf-bossenstein/' : '/',
+  build: { target: 'es2022', chunkSizeWarningLimit: 1200 },
   server: { host: true },
-});
+}));

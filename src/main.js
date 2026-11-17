@@ -6,6 +6,8 @@ import { createGeo } from './geo.js';
 import { buildWorld } from './world.js';
 import { makeBriefingData, analyzeHole } from './briefing.js';
 
+const DATA = import.meta.env.BASE_URL + 'data/'; // werkt lokaal (/) en op GitHub Pages (/golf-bossenstein/)
+
 const EXAG = 1.6; // lichte verticale overdrijving: Bossenstein is vlak (8–23 m)
 const STORE_KEY = 'bossenstein.holes.v1';
 
@@ -16,8 +18,8 @@ const toast = (msg, ms = 2500) => {
 };
 
 // ---------- data ----------
-const meta = await (await fetch('/data/meta.json')).json();
-const heights = new Float32Array(await (await fetch('/data/height.bin')).arrayBuffer());
+const meta = await (await fetch(DATA + 'meta.json')).json();
+const heights = new Float32Array(await (await fetch(DATA + 'height.bin')).arrayBuffer());
 const geo = createGeo(meta);
 $('attrib').textContent = meta.attribution;
 
@@ -36,7 +38,7 @@ function groundY(x, z) {
 const realHeight = (x, z) => groundY(x, z) / EXAG + H0; // echte meters TAW
 
 // hindernissen (water uit OSM, bunkers herkend op de luchtfoto) voor de hole-briefing
-const hazards = await (await fetch('/data/' + meta.hazards)).json();
+const hazards = await (await fetch(DATA + meta.hazards)).json();
 const briefingData = makeBriefingData(meta, hazards);
 
 // ---------- scene ----------

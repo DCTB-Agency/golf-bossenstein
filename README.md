@@ -2,6 +2,10 @@
 
 3D-weergave van het Championship-parcours van Bossenstein Golf & Polo Club (Broechem), als basis voor een golf-app met GPS-afstanden en scorekaart.
 
+## Online
+
+De app staat op **https://dctb-agency.github.io/golf-bossenstein/**. Elke push naar `main` bouwt en publiceert automatisch (zie `.github/workflows/pages.yml`). GPS werkt daar, want de site draait op HTTPS.
+
 ## Starten
 
 ```bash

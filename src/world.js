@@ -1,5 +1,6 @@
 // De 3D-wereld: terrein met luchtfoto-tegels, gebouwen, bomen, water, lucht en zon.
 import * as THREE from 'three';
+const DATA = import.meta.env.BASE_URL + 'data/';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
@@ -51,7 +52,7 @@ export async function buildWorld({ scene, renderer, meta, heights, exag, groundY
   const cellX = W / (N - 1), cellZ = D / (N - 1);
   const tileW = W / TN, tileD = D / TN;
   const terrainMeshes = [];
-  const mosaic = prepTex(await loader.loadAsync('/data/' + meta.ortho4k));
+  const mosaic = prepTex(await loader.loadAsync(DATA + meta.ortho4k));
   const terrainGroup = new THREE.Group();
   scene.add(terrainGroup);
   // fijne grasdetail (alleen dichtbij zichtbaar) voor extra scherpte boven de luchtfoto-resolutie
@@ -103,7 +104,7 @@ export async function buildWorld({ scene, renderer, meta, heights, exag, groundY
     const m = new THREE.Mesh(g, mat);
     m.receiveShadow = true;
     terrainGroup.add(m); terrainMeshes.push(m);
-    loader.loadAsync(`/data/${lowEnd ? dirs.lo : dirs.hi}/t_${j}_${i}.jpg`).then((t) => {
+    loader.loadAsync(`${DATA}${lowEnd ? dirs.lo : dirs.hi}/t_${j}_${i}.jpg`).then((t) => {
       mat.map = prepTex(t); mat.needsUpdate = true; low.dispose();
     });
   }
@@ -155,7 +156,7 @@ export async function buildWorld({ scene, renderer, meta, heights, exag, groundY
   }
 
   // ---------- gebouwen: GRB-contour, gevelfoto's, dak uit DSM met luchtfoto ----------
-  const buildings = await (await fetch('/data/' + meta.buildings)).json();
+  const buildings = await (await fetch(DATA + meta.buildings)).json();
   const wallTex = (() => { // eenvoudige gevel voor bijgebouwen: baksteen + raam per travee van 3 m
     const c = document.createElement('canvas'); c.width = c.height = 256;
     const x = c.getContext('2d');
@@ -170,7 +171,7 @@ export async function buildWorld({ scene, renderer, meta, heights, exag, groundY
     return t;
   })();
   const facade = async (name, repeat) => {
-    const t = await loader.loadAsync(`/data/facades/${name}.jpg`);
+    const t = await loader.loadAsync(`${DATA}facades/${name}.jpg`);
     t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso;
     t.wrapS = repeat ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping; t.wrapT = repeat ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
     return t;
@@ -331,7 +332,7 @@ export async function buildWorld({ scene, renderer, meta, heights, exag, groundY
   addMesh(roofs, new THREE.MeshStandardMaterial({ map: roofTex, roughness: 0.75, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, envMapIntensity: 0.5 }));
 
   // ---------- bomen: echte positie, hoogte, kroonbreedte en fotokleur ----------
-  const trees = new Float32Array(await (await fetch('/data/' + meta.trees.file)).arrayBuffer());
+  const trees = new Float32Array(await (await fetch(DATA + meta.trees.file)).arrayBuffer());
   const S = meta.trees.stride, count = trees.length / S;
   const noise3 = (x, y, z) => Math.sin(x * 3.1 + y * 1.7) * Math.cos(z * 2.3 - x * 1.1) * 0.5 + Math.sin(y * 5.3 + z * 4.1) * 0.25;
   const blobCrown = () => { // loofkroon: samengestelde, licht vervormde bollen
