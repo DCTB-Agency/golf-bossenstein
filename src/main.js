@@ -274,8 +274,9 @@ function updatePanel() {
   else {
     const diff = Math.round(len - ref);
     m.textContent = `Gemeten ${Math.round(len)} m · scorekaart ${ref} m (geel) · ${diff >= 0 ? '+' : ''}${diff} m`;
-    m.className = 'measure ' + (Math.abs(diff) <= Math.max(8, ref * 0.04) ? 'ok' : 'off');
+    m.className = 'measure ' + (Math.abs(diff) <= Math.max(8, ref * 0.05) ? 'ok' : 'off');
   }
+  if (h.status?.includes('controleren')) { m.textContent += ' · ⚠ te controleren'; m.className = 'measure off'; }
   $('hole-togo').textContent = me && h.green ? `${Math.round(geo.distance(me, h.green))} m` : '–';
   const strip = $('hole-strip');
   if (!strip.children.length) {
@@ -289,6 +290,7 @@ function updatePanel() {
   [...strip.children].forEach((b, i) => {
     b.classList.toggle('active', i === current);
     b.classList.toggle('missing', !holePath(holes[i]));
+    b.title = holes[i].status || '';
   });
   strip.children[current]?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
 }

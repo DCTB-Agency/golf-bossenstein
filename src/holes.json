@@ -1,6 +1,6 @@
 {
   "course": "Bossenstein Golf & Polo Club – Championship Course",
-  "source": "https://bossenstein.be/course/ + officiële scorekaart (Scorekaart-C.C.pdf)",
+  "source": "https://bossenstein.be/course/ + officiële scorekaart (Scorekaart-C.C.pdf) · routing: https://bossenstein.be/wp-content/uploads/2022/02/18hole.png",
   "note": "Lengtes in meter. Posities [lon, lat] gelden voor de gele tee. Executive Course (9 holes) ligt ten westen van het kasteel en loopt zuidwaarts de spits in; die zone hoort niet bij deze holes.",
   "tees": [
     {
@@ -45,8 +45,8 @@
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h1.jpg",
       "tee": [
-        4.5967614,
-        51.1943184
+        4.596575,
+        51.1949153
       ],
       "green": [
         4.5998288,
@@ -120,9 +120,16 @@
         "LRE": 265
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h4.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.5970767,
+        51.1931518
+      ],
+      "green": [
+        4.6016635,
+        51.1932151
+      ],
+      "via": [],
+      "status": "afgeleid uit baanplan + luchtfoto + app-screenshot (gele tee)"
     },
     {
       "no": 5,
@@ -135,9 +142,16 @@
         "LRE": 125
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h5.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.5990834,
+        51.1930342
+      ],
+      "green": [
+        4.59679,
+        51.1927629
+      ],
+      "via": [],
+      "status": "afgeleid uit baanplan + luchtfoto + app-screenshot (gele tee)"
     },
     {
       "no": 6,
@@ -150,9 +164,16 @@
         "LRE": 315
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h6.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.5969334,
+        51.1925187
+      ],
+      "green": [
+        4.6018785,
+        51.1928172
+      ],
+      "via": [],
+      "status": "afgeleid uit baanplan + luchtfoto + app-screenshot (gele tee)"
     },
     {
       "no": 7,
@@ -165,9 +186,21 @@
         "LRE": 425
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h7.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.6018785,
+        51.193812
+      ],
+      "green": [
+        4.5963887,
+        51.1939024
+      ],
+      "via": [
+        [
+          4.5983667,
+          51.193604
+        ]
+      ],
+      "status": "te controleren (baanplan + luchtfoto + app-screenshot)"
     },
     {
       "no": 8,
@@ -180,9 +213,16 @@
         "LRE": 108
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h8.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.59593,
+        51.1943727
+      ],
+      "green": [
+        4.5962883,
+        51.1953675
+      ],
+      "via": [],
+      "status": "afgeleid uit baanplan + luchtfoto + app-screenshot (gele tee)"
     },
     {
       "no": 9,
@@ -195,9 +235,21 @@
         "LRE": 247
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h9.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.5949267,
+        51.1953675
+      ],
+      "green": [
+        4.5899816,
+        51.195051
+      ],
+      "via": [
+        [
+          4.5911999,
+          51.1952318
+        ]
+      ],
+      "status": "afgeleid uit baanplan + luchtfoto + app-screenshot (gele tee)"
     },
     {
       "no": 10,
@@ -210,9 +262,16 @@
         "LRE": 313
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h10.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.5886199,
+        51.196091
+      ],
+      "green": [
+        4.5893365,
+        51.19279
+      ],
+      "via": [],
+      "status": "te controleren (baanplan + luchtfoto + app-screenshot)"
     },
     {
       "no": 11,
@@ -225,9 +284,16 @@
         "LRE": 287
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h11.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.5913146,
+        51.1934502
+      ],
+      "green": [
+        4.5925616,
+        51.1904658
+      ],
+      "via": [],
+      "status": "te controleren (baanplan + luchtfoto + app-screenshot)"
     },
     {
       "no": 12,
@@ -240,9 +306,21 @@
         "LRE": 375
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h12.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.593608,
+        51.1908456
+      ],
+      "green": [
+        4.5900532,
+        51.1943003
+      ],
+      "via": [
+        [
+          4.5919166,
+          51.1927448
+        ]
+      ],
+      "status": "te controleren (baanplan + luchtfoto + app-screenshot)"
     },
     {
       "no": 13,
@@ -255,9 +333,16 @@
         "LRE": 284
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h13.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.5916013,
+        51.1943908
+      ],
+      "green": [
+        4.5937513,
+        51.1914335
+      ],
+      "via": [],
+      "status": "te controleren (baanplan + luchtfoto + app-screenshot)"
     },
     {
       "no": 14,
@@ -270,9 +355,16 @@
         "LRE": 123
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h14.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.5937083,
+        51.1908456
+      ],
+      "green": [
+        4.5958583,
+        51.1908908
+      ],
+      "via": [],
+      "status": "te controleren (baanplan + luchtfoto + app-screenshot)"
     },
     {
       "no": 15,
@@ -285,9 +377,16 @@
         "LRE": 201
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h15.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.5970767,
+        51.191343
+      ],
+      "green": [
+        4.6009468,
+        51.1914335
+      ],
+      "via": [],
+      "status": "afgeleid uit baanplan + luchtfoto + app-screenshot (gele tee)"
     },
     {
       "no": 16,
@@ -300,9 +399,21 @@
         "LRE": 330
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h16.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.6016635,
+        51.1915239
+      ],
+      "green": [
+        4.5960733,
+        51.1914335
+      ],
+      "via": [
+        [
+          4.5985817,
+          51.1915691
+        ]
+      ],
+      "status": "afgeleid uit baanplan + luchtfoto + app-screenshot (gele tee)"
     },
     {
       "no": 17,
@@ -315,9 +426,16 @@
         "LRE": 303
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h17.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.59679,
+        51.1922022
+      ],
+      "green": [
+        4.6015201,
+        51.1918404
+      ],
+      "via": [],
+      "status": "afgeleid uit baanplan + luchtfoto + app-screenshot (gele tee)"
     },
     {
       "no": 18,
@@ -330,9 +448,21 @@
         "LRE": 311
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h18.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.6018785,
+        51.1939205
+      ],
+      "green": [
+        4.59765,
+        51.1949877
+      ],
+      "via": [
+        [
+          4.5992267,
+          51.1950962
+        ]
+      ],
+      "status": "afgeleid uit baanplan + luchtfoto + app-screenshot (gele tee)"
     }
   ]
 }
