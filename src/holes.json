@@ -1,7 +1,7 @@
 {
   "course": "Bossenstein Golf & Polo Club – Championship Course",
   "source": "https://bossenstein.be/course/ + officiële scorekaart (Scorekaart-C.C.pdf)",
-  "note": "Lengtes in meter. Tee/green-posities [lon, lat] nog in te tekenen: de luchtfoto alleen is niet eenduidig (Championship en Executive Course liggen door elkaar).",
+  "note": "Lengtes in meter. Posities [lon, lat] gelden voor de gele tee. Executive Course (9 holes) ligt ten westen van het kasteel en loopt zuidwaarts de spits in; die zone hoort niet bij deze holes.",
   "tees": [
     {
       "id": "MWH",
@@ -45,20 +45,20 @@
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h1.jpg",
       "tee": [
-        4.5969334,
-        51.1949334
+        4.5967614,
+        51.1943184
       ],
       "green": [
         4.5998288,
-        51.1953223
+        51.1953494
       ],
       "via": [
         [
-          4.5990117,
-          51.1955303
+          4.5994274,
+          51.1953675
         ]
       ],
-      "status": "bevestigd door gebruiker (ankerpunten)"
+      "status": "ankerpunten gebruiker + screenshot (gele tee)"
     },
     {
       "no": 2,
@@ -71,9 +71,21 @@
         "LRE": 266
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h2.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.6006888,
+        51.195268
+      ],
+      "green": [
+        4.5973204,
+        51.1960729
+      ],
+      "via": [
+        [
+          4.5977504,
+          51.1961452
+        ]
+      ],
+      "status": "ankerpunten gebruiker + screenshot (gele tee)"
     },
     {
       "no": 3,
@@ -86,9 +98,16 @@
         "LRE": 109
       },
       "drawing": "https://bossenstein.be/wp-content/uploads/2022/06/h3.jpg",
-      "tee": null,
-      "green": null,
-      "via": []
+      "tee": [
+        4.5954713,
+        51.1959372
+      ],
+      "green": [
+        4.5955,
+        51.1948882
+      ],
+      "via": [],
+      "status": "ankerpunten gebruiker + screenshot (gele tee)"
     },
     {
       "no": 4,

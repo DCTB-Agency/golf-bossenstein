@@ -268,11 +268,12 @@ function updatePanel() {
   if ($('drawing').dataset.no !== String(h.no)) {
     $('drawing').src = h.drawing; $('drawing').dataset.no = h.no; $('drawing-link').href = h.drawing;
   }
-  const m = $('measure'), ref = h.length?.MWH;
-  if (!len) { m.textContent = `Nog niet ingetekend · doel ${ref} m (wit)`; m.className = 'measure'; }
+  // posities worden ingetekend vanaf de gele tee
+  const m = $('measure'), ref = h.length?.MYE;
+  if (!len) { m.textContent = `Nog niet ingetekend · doel ${ref} m (geel)`; m.className = 'measure'; }
   else {
     const diff = Math.round(len - ref);
-    m.textContent = `Gemeten ${Math.round(len)} m · scorekaart ${ref} m (wit) · ${diff >= 0 ? '+' : ''}${diff} m`;
+    m.textContent = `Gemeten ${Math.round(len)} m · scorekaart ${ref} m (geel) · ${diff >= 0 ? '+' : ''}${diff} m`;
     m.className = 'measure ' + (Math.abs(diff) <= Math.max(8, ref * 0.04) ? 'ok' : 'off');
   }
   $('hole-togo').textContent = me && h.green ? `${Math.round(geo.distance(me, h.green))} m` : '–';
