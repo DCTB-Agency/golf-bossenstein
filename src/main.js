@@ -74,9 +74,11 @@ let current = 0;
 const holeGroup = new THREE.Group();
 scene.add(holeGroup);
 
-// officiële data uit holes.json, posities uit localStorage (als die er zijn) eroverheen
+// officiële data uit holes.json; enkel lokaal en op staging komen ingetekende posities uit localStorage eroverheen
+// (publiek en staging delen hetzelfde domein, dus ook dezelfde localStorage)
 function loadHoles() {
   const holes = structuredClone(holesData.holes);
+  if (!(import.meta.env.DEV || import.meta.env.VITE_STAGING === '1')) return holes;
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
     if (saved?.length === 18) saved.forEach((s, i) => {
