@@ -3,8 +3,9 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import holesData from './holes.json';
 import { createGeo } from './geo.js';
+import { buildWorld } from './world.js';
 
-const EXAG = 3; // verticale overdrijving: Bossenstein is vlak (8–23 m), dit maakt reliëf leesbaar
+const EXAG = 1.6; // lichte verticale overdrijving: Bossenstein is vlak (8–23 m)
 const STORE_KEY = 'bossenstein.holes.v1';
 
 const $ = (id) => document.getElementById(id);
@@ -16,7 +17,6 @@ const toast = (msg, ms = 2500) => {
 // ---------- data ----------
 const meta = await (await fetch('/data/meta.json')).json();
 const heights = new Float32Array(await (await fetch('/data/height.bin')).arrayBuffer());
-const treeBuf = new Float32Array(await (await fetch('/data/trees.bin')).arrayBuffer());
 const geo = createGeo(meta);
 $('attrib').textContent = meta.attribution;
 
@@ -34,13 +34,13 @@ function groundY(x, z) {
 }
 
 // ---------- scene ----------
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = 1.12;
 $('app').appendChild(renderer.domElement);
 
 const labels = new CSS2DRenderer();
@@ -49,108 +49,15 @@ Object.assign(labels.domElement.style, { position: 'fixed', inset: '0', pointerE
 document.body.appendChild(labels.domElement);
 
 const scene = new THREE.Scene();
-const sky = new THREE.Color('#bcd6e8');
-scene.background = sky;
-scene.fog = new THREE.Fog(sky, 900, 2600);
-
-const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 6000);
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.5, 30000);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.maxPolarAngle = Math.PI * 0.47;
-controls.minDistance = 25;
-controls.maxDistance = 2200;
+controls.maxPolarAngle = Math.PI * 0.485;
+controls.minDistance = 8;
+controls.maxDistance = 2600;
 
-scene.add(new THREE.HemisphereLight('#dfefff', '#4b5a33', 1.1));
-const sun = new THREE.DirectionalLight('#fff4dc', 2.2);
-sun.position.set(-600, 700, 400);
-sun.castShadow = true;
-sun.shadow.mapSize.set(4096, 4096);
-Object.assign(sun.shadow.camera, { left: -800, right: 800, top: 800, bottom: -800, near: 10, far: 2500 });
-sun.shadow.bias = -0.0005;
-scene.add(sun);
-
-// ---------- terrein met luchtfoto ----------
-const terrainGeo = new THREE.PlaneGeometry(W, D, N - 1, N - 1);
-terrainGeo.rotateX(-Math.PI / 2);
-terrainGeo.translate((minX + maxX) / 2, 0, (minZ + maxZ) / 2);
-{
-  const pos = terrainGeo.attributes.position;
-  for (let k = 0; k < pos.count; k++) pos.setY(k, (heights[k] - H0) * EXAG);
-  terrainGeo.computeVertexNormals();
-}
-const ortho = await new THREE.TextureLoader().loadAsync('/data/' + meta.ortho);
-ortho.colorSpace = THREE.SRGBColorSpace;
-ortho.anisotropy = renderer.capabilities.getMaxAnisotropy();
-const terrain = new THREE.Mesh(terrainGeo, new THREE.MeshStandardMaterial({ map: ortho, roughness: 0.95 }));
-terrain.receiveShadow = true;
-scene.add(terrain);
-
-// rok rond het terrein zodat het als een maquette leest
-{
-  const skirt = new THREE.Mesh(
-    new THREE.BoxGeometry(W + 4, 30, D + 4),
-    new THREE.MeshStandardMaterial({ color: '#3b2f22', roughness: 1 })
-  );
-  skirt.position.set((minX + maxX) / 2, -16, (minZ + maxZ) / 2);
-  scene.add(skirt);
-  const ground = new THREE.Mesh(new THREE.CircleGeometry(4000, 64), new THREE.MeshStandardMaterial({ color: '#6f8a5a' }));
-  ground.rotation.x = -Math.PI / 2; ground.position.y = -31;
-  scene.add(ground);
-}
-
-// ---------- water ----------
-const waterMat = new THREE.MeshStandardMaterial({
-  color: '#2c5f7a', roughness: 0.08, metalness: 0.2, transparent: true, opacity: 0.88,
-});
-const shape = (pts) => new THREE.Shape(pts.map(([x, z]) => new THREE.Vector2(x, -z)));
-for (const pts of meta.features.water) {
-  if (pts.length < 4) continue;
-  const g = new THREE.ShapeGeometry(shape(pts));
-  g.rotateX(-Math.PI / 2);
-  const shore = Math.min(...pts.map(([x, z]) => groundY(x, z)));
-  const m = new THREE.Mesh(g, waterMat);
-  m.position.y = shore + 0.4;
-  m.receiveShadow = true;
-  scene.add(m);
-}
-
-// ---------- gebouwen (o.a. kasteel & clubhuis) ----------
-const bMat = new THREE.MeshStandardMaterial({ color: '#e9e2d4', roughness: 0.8 });
-for (const { pts, levels } of meta.features.buildings) {
-  const g = new THREE.ExtrudeGeometry(shape(pts), { depth: levels * 3.2 + 1.5, bevelEnabled: false });
-  g.rotateX(-Math.PI / 2);
-  const base = Math.min(...pts.map(([x, z]) => groundY(x, z)));
-  const m = new THREE.Mesh(g, bMat);
-  m.position.y = base - 0.5;
-  m.castShadow = m.receiveShadow = true;
-  scene.add(m);
-}
-
-// ---------- bomen (posities en hoogtes uit DSM-DTM) ----------
-{
-  const count = treeBuf.length / 3;
-  const crownGeo = new THREE.IcosahedronGeometry(1, 1);
-  const trunkGeo = new THREE.CylinderGeometry(0.12, 0.18, 1, 6).translate(0, 0.5, 0);
-  const crowns = new THREE.InstancedMesh(crownGeo, new THREE.MeshStandardMaterial({ roughness: 1, flatShading: true }), count);
-  const trunks = new THREE.InstancedMesh(trunkGeo, new THREE.MeshStandardMaterial({ color: '#5a4632', roughness: 1 }), count);
-  crowns.castShadow = trunks.castShadow = true;
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
-  const c = new THREE.Color();
-  const palette = ['#3f5f2c', '#4c6b31', '#566f36', '#3a5530', '#6b6a3a', '#5d4e33'];
-  for (let i = 0; i < count; i++) {
-    const x = treeBuf[i * 3], z = treeBuf[i * 3 + 1], h = treeBuf[i * 3 + 2];
-    const y = groundY(x, z);
-    const r = THREE.MathUtils.clamp(h * 0.28, 1.5, 6);
-    const hh = h * 1.15; // lichte overdrijving zodat bomen bij de reliëfschaal passen
-    q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), (i * 2.399) % 6.283);
-    m.compose(p.set(x, y + hh - r * 0.9, z), q, s.set(r, r * 1.15, r));
-    crowns.setMatrixAt(i, m);
-    m.compose(p.set(x, y, z), q, s.set(1.4, hh - r * 1.2, 1.4));
-    trunks.setMatrixAt(i, m);
-    crowns.setColorAt(i, c.set(palette[i % palette.length]).offsetHSL(0, 0, ((i * 7919) % 100) / 1000 - 0.05));
-  }
-  scene.add(crowns, trunks);
-}
+const world = await buildWorld({ scene, renderer, meta, heights, exag: EXAG, groundY });
+const terrain = world.terrainMeshes;
 
 // ---------- holes ----------
 let holes = loadHoles();
@@ -360,7 +267,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   if (!placing || !down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
   ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   ray.setFromCamera(ndc, camera);
-  const hit = ray.intersectObject(terrain)[0];
+  const hit = ray.intersectObjects(terrain, false)[0];
   if (!hit) return;
   const ll = geo.toLonLat(hit.point.x, hit.point.z).map((v) => +v.toFixed(7));
   const h = holes[current];
@@ -413,6 +320,7 @@ renderer.setAnimationLoop((now) => {
     if (t >= 1) fly = null;
   }
   controls.update();
+  world.update(camera, controls.target, now);
   renderer.render(scene, camera);
   labels.render(scene, camera);
 });
