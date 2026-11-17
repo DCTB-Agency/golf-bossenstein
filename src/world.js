@@ -1,6 +1,6 @@
 // De 3D-wereld: terrein met luchtfoto-tegels, gebouwen, bomen, water, lucht en zon.
 import * as THREE from 'three';
-const DATA = import.meta.env.BASE_URL + 'data/';
+const DATA = import.meta.env.VITE_DATA_BASE || import.meta.env.BASE_URL + 'data/';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 

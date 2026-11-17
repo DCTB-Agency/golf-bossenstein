@@ -63,6 +63,26 @@
 
   <nav class="holes" id="hole-strip"></nav>
 
+  <!-- gsm: compacte onderbalk + briefing als sluitbare kaart -->
+  <div class="mbar" id="mbar">
+    <button id="m-prev" aria-label="Vorige hole">‹</button>
+    <div class="m-info">
+      <strong id="m-title">Hole –</strong>
+      <span id="m-meta">–</span>
+    </div>
+    <button id="m-next" aria-label="Volgende hole">›</button>
+    <button id="m-brief" class="cta">Briefing</button>
+  </div>
+  <div class="sheet" id="sheet" hidden>
+    <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <header>
+        <div><strong id="sheet-title">Hole</strong><small id="sheet-sub"></small></div>
+        <button id="sheet-close" aria-label="Sluiten">✕</button>
+      </header>
+      <div class="sheet-body briefing" id="sheet-body"></div>
+    </div>
+  </div>
+
   <div class="toast" id="toast" hidden></div>
   <footer class="attrib" id="attrib"></footer>
   <script type="module" src="/src/main.js"></script>

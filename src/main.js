@@ -6,7 +6,8 @@ import { createGeo } from './geo.js';
 import { buildWorld } from './world.js';
 import { makeBriefingData, analyzeHole } from './briefing.js';
 
-const DATA = import.meta.env.BASE_URL + 'data/'; // werkt lokaal (/) en op GitHub Pages (/golf-bossenstein/)
+// data: lokaal (/), op GitHub Pages (/golf-bossenstein/); staging deelt de data van de hoofdversie
+const DATA = import.meta.env.VITE_DATA_BASE || import.meta.env.BASE_URL + 'data/';
 
 const EXAG = 1.6; // lichte verticale overdrijving: Bossenstein is vlak (8–23 m)
 const STORE_KEY = 'bossenstein.holes.v1';
@@ -194,29 +195,55 @@ function addBriefingMarkers(h) {
   }
 }
 
-let briefingOpen = null;
+let briefingOpen = true;
+let briefingCount = 0;
 function renderBriefing(h) {
-  const el = $('briefing');
+  const el = $('briefing'), sheetBody = $('sheet-body');
   const a = analyzeHole({ hole: h, geo, data: briefingData, realHeight, me });
-  if (!a) { el.innerHTML = '<p class="muted">Teken tee en green in om de briefing te zien.</p>'; return; }
+  if (!a) {
+    el.innerHTML = sheetBody.innerHTML = '<p class="muted">Voor deze hole is nog geen tee en green ingetekend.</p>';
+    briefingCount = 0; return;
+  }
   const row = (r) => `<li class="${r.tone || ''}"><span class="ic">${r.icon}</span><span>${r.text}${r.sub ? `<small>${r.sub}</small>` : ''}</span></li>`;
-  // inklapbaar: op gsm standaard dicht zodat de baan zichtbaar blijft; keuze blijft bewaard
-  if (briefingOpen === null) briefingOpen = !matchMedia('(max-width: 640px)').matches;
-  const count = a.lines.length + a.green.filter((g) => g.tone !== 'ok').length;
+  briefingCount = a.lines.length + a.green.filter((g) => g.tone !== 'ok').length;
+  const stars = a.stars ? '★'.repeat(a.stars) + '☆'.repeat(5 - a.stars) : '';
+  const body = `
+    <p class="muted">${a.fromMe ? `Afstanden vanaf jouw positie (nog ${Math.round(a.L - a.s0)} m)` : `Afstanden vanaf de tee · ${Math.round(a.L)} m langs de speellijn`}</p>
+    ${a.lines.length ? `<ul>${a.lines.map(row).join('')}</ul>` : '<p class="muted">Geen water of bunkers in de speellijn.</p>'}
+    <div class="b-sub">Rond de green</div><ul>${a.green.map(row).join('')}</ul>
+    <div class="b-sub">Speltips</div><ul class="tips">${a.tips.map((t) => `<li>${t}</li>`).join('')}</ul>`;
+  // desktop: inklapbaar in het zijpaneel
   el.innerHTML = `
     <details ${briefingOpen ? 'open' : ''}>
-      <summary class="b-head"><strong>Hole-briefing <em>${count} aandachtspunt${count === 1 ? '' : 'en'}</em></strong><span>${a.stars ? '★'.repeat(a.stars) + '☆'.repeat(5 - a.stars) : ''}</span></summary>
-      <p class="muted">${a.fromMe ? `Afstanden vanaf jouw positie (nog ${Math.round(a.L - a.s0)} m)` : `Afstanden vanaf de tee · ${Math.round(a.L)} m langs de speellijn`}</p>
-      ${a.lines.length ? `<ul>${a.lines.map(row).join('')}</ul>` : '<p class="muted">Geen water of bunkers in de speellijn.</p>'}
-      <div class="b-sub">Rond de green</div><ul>${a.green.map(row).join('')}</ul>
-      <div class="b-sub">Speltips</div><ul class="tips">${a.tips.map((t) => `<li>${t}</li>`).join('')}</ul>
+      <summary class="b-head"><strong>Hole-briefing <em>${briefingCount} aandachtspunt${briefingCount === 1 ? '' : 'en'}</em></strong><span>${stars}</span></summary>
+      ${body}
     </details>`;
   el.querySelector('details').addEventListener('toggle', (e) => { briefingOpen = e.target.open; });
+  // gsm: dezelfde inhoud in de kaart die van onderen opschuift
+  sheetBody.innerHTML = body;
+  $('sheet-sub').textContent = `Par ${h.par} · ${h.length?.[teeId] ?? '–'} m · SI ${h.si ?? '–'} ${stars ? '· ' + stars : ''}`;
+}
+
+// ---------- gsm: onderbalk + briefingkaart ----------
+const openSheet = () => { $('sheet').hidden = false; requestAnimationFrame(() => $('sheet').classList.add('open')); };
+const closeSheet = () => { $('sheet').classList.remove('open'); setTimeout(() => ($('sheet').hidden = true), 220); };
+$('m-brief').onclick = openSheet;
+$('sheet-close').onclick = closeSheet;
+$('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') closeSheet(); }); // tik naast de kaart
+addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+function updateMobileBar(h) {
+  const len = h.length?.[teeId];
+  $('m-title').textContent = `Hole ${h.no}`;
+  const togo = me && h.green ? ` · nog ${Math.round(geo.distance(me, h.green))} m` : '';
+  $('m-meta').textContent = `Par ${h.par} · ${len ? len + ' m' : '–'}${togo}`;
+  $('m-brief').innerHTML = `Briefing${briefingCount ? ` <span class="badge">${briefingCount}</span>` : ''}`;
+  $('sheet-title').textContent = `Hole ${h.no}`;
 }
 
 function updatePanel() {
   const h = holes[current];
   renderBriefing(h);
+  updateMobileBar(h);
   $('hole-no').textContent = h.no;
   $('hole-par').textContent = h.par ?? '–';
   $('hole-si').textContent = h.si ?? '–';
@@ -282,14 +309,17 @@ function selectHole(i) {
   renderHoles();
   viewHole(holes[current]);
 }
-$('prev').onclick = () => selectHole(current - 1);
-$('next').onclick = () => selectHole(current + 1);
+$('prev').onclick = $('m-prev').onclick = () => selectHole(current - 1);
+$('next').onclick = $('m-next').onclick = () => selectHole(current + 1);
 $('btn-overview').onclick = () => overview(false);
 
-// ---------- editor: tee / green / knikpunt plaatsen ----------
+// ---------- editor: tee / green / knikpunt plaatsen (enkel lokaal en op staging) ----------
+const EDITOR = import.meta.env.DEV || import.meta.env.VITE_STAGING === '1';
+if (!EDITOR) $('btn-edit').remove();
+if (import.meta.env.VITE_STAGING === '1') document.body.classList.add('staging');
 let placing = null;
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-$('btn-edit').onclick = (e) => {
+if (EDITOR) $('btn-edit').onclick = (e) => {
   const ed = $('editor'); ed.hidden = !ed.hidden;
   e.currentTarget.classList.toggle('active', !ed.hidden);
 };
