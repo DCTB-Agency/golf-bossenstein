@@ -254,7 +254,70 @@ for (const e of osm.elements) {
   else if (t.natural === 'water') feats.water.push(pts);
 }
 
+// ---------- 6. Bunkers: zandkleur op de zomerfoto → samenhangende vlekken ----------
+const osmB = JSON.parse(fs.readFileSync('raw/osm.json', 'utf8'));
+const courseLocal = [], waterLocal = [];
+for (const e of osmB.elements) {
+  if (!e.geometry) continue;
+  const poly = e.geometry.map((p) => toLocal(p.lon, p.lat));
+  if (e.tags?.leisure === 'golf_course') courseLocal.push(poly);
+  else if (e.tags?.natural === 'water') waterLocal.push(poly);
+}
+const sandMask = new Uint8Array(OW * OH);
+for (let k = 0; k < OW * OH; k++) {
+  const r = orthoRaw.data[k * OC], g = orthoRaw.data[k * OC + 1], b = orthoRaw.data[k * OC + 2];
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  const warmSand = r > 145 && g > 132 && b > 98 && r - b >= 18 && r - g >= 5 && b / r < 0.89;
+  const whiteSand = r + g + b > 520 && mx - mn < 62 && b <= r + 6 && g >= b - 6;
+  sandMask[k] = warmSand || whiteSand ? 1 : 0;
+}
+// sluiten (3x3) zodat harken en schaduwranden geen gaten maken
+const closed = new Uint8Array(OW * OH);
+for (let y = 1; y < OH - 1; y++) for (let x = 1; x < OW - 1; x++) {
+  let n = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) n += sandMask[(y + dy) * OW + x + dx];
+  closed[y * OW + x] = n >= 3 ? 1 : 0;
+}
+const pxM2 = ((EX1 - EX0) / OW) * ((EZ1 - EZ0) / OH);
+const lxOf = (x) => EX0 + ((x + 0.5) / OW) * (EX1 - EX0), lzOf = (y) => EZ0 + ((y + 0.5) / OH) * (EZ1 - EZ0);
+const NOT_BUNKER = [[35, 112, -485, -405], [95, 140, -432, -400], [0, 45, -125, -85]];
+const seen = new Uint8Array(OW * OH), bunkers = [];
+for (let s = 0; s < OW * OH; s++) {
+  if (!closed[s] || seen[s]) continue;
+  const stack = [s], cells = []; seen[s] = 1; let perim = 0;
+  while (stack.length) {
+    const k = stack.pop(); cells.push(k);
+    const x = k % OW, y = (k - x) / OW;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= OW || yy >= OH) { perim++; continue; }
+      const kk = yy * OW + xx;
+      if (!closed[kk]) { perim++; continue; }
+      if (!seen[kk]) { seen[kk] = 1; stack.push(kk); }
+    }
+  }
+  const area = cells.length * pxM2;
+  if (area < 5 || area > 1800) continue;                      // te klein / parking, manege
+  const width = (2 * area) / (perim * Math.sqrt(pxM2));         // gemiddelde breedte (m)
+  if (width < 1.6) continue;                                    // paden en randen
+  let cx = 0, cz = 0; for (const k of cells) { cx += lxOf(k % OW); cz += lzOf(Math.floor(k / OW)); }
+  cx /= cells.length; cz /= cells.length;
+  if (buildings.some((b) => inPoly(cx, cz, b.p))) continue;     // lichte daken
+  if (!courseLocal.some((poly) => inPoly(cx, cz, poly))) continue; // buiten de golfbaan (tuinen, manege)
+  if (waterLocal.some((poly) => inPoly(cx, cz, poly))) continue;   // troebele vijvers
+  let sb = 0, sb2 = 0; // egaliteit: zand is egaal, een parking met auto's niet
+  for (const k of cells) { const v = orthoRaw.data[k * OC] + orthoRaw.data[k * OC + 1] + orthoRaw.data[k * OC + 2]; sb += v; sb2 += v * v; }
+  const std = Math.sqrt(Math.max(0, sb2 / cells.length - (sb / cells.length) ** 2)) / 3;
+  if (std > 30) continue;
+  // vaste uitsluitingen (Bossenstein): parking en terras bij het clubhuis
+  if (NOT_BUNKER.some(([x0, x1, z0, z1]) => cx > x0 && cx < x1 && cz > z0 && cz < z1)) continue;
+  const pts = []; // punten om de ~1,4 m voor de analyse in de app
+  for (const k of cells) { const x = k % OW, y = Math.floor(k / OW); if (x % 4 === 0 && y % 4 === 0) pts.push([+lxOf(x).toFixed(1), +lzOf(y).toFixed(1)]); }
+  if (!pts.length) pts.push([+cx.toFixed(1), +cz.toFixed(1)]);
+  bunkers.push({ c: [+cx.toFixed(1), +cz.toFixed(1)], a: Math.round(area), p: pts });
+}
+fs.writeFileSync(`${out}/hazards.json`, JSON.stringify({ bunkers }));
+
 fs.writeFileSync(`${out}/meta.json`, JSON.stringify({
+  hazards: 'hazards.json',
   bbox: BBOX, origin: { lat: lat0, lon: lon0 }, metersPerDeg: { lon: MX, lat: MZ },
   extent: { minX: EX0, maxX: EX1, minZ: EZ0, maxZ: EZ1 },
   height: { file: 'height.bin', size: N, min: lo, max: hi },
@@ -265,4 +328,4 @@ fs.writeFileSync(`${out}/meta.json`, JSON.stringify({
   features: feats,
   attribution: 'Luchtfoto (zomer 2024), hoogtemodel & GRB © Digitaal Vlaanderen (CC-BY 4.0) · Kaartdata © OpenStreetMap-bijdragers (ODbL) · Kasteelgevels: Zairon, CC BY-SA 4.0 (Wikimedia Commons)',
 }));
-console.log({ N, lo: lo.toFixed(1), hi: hi.toFixed(1), buildings: buildings.length, gable: buildings.filter((b) => b.roof === 'gable').length, trees: trees.length / 8, conifers: nCon });
+console.log({ N, lo: lo.toFixed(1), hi: hi.toFixed(1), buildings: buildings.length, gable: buildings.filter((b) => b.roof === 'gable').length, trees: trees.length / 8, conifers: nCon, bunkers: bunkers.length });

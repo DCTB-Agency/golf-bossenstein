@@ -4,6 +4,7 @@ import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRe
 import holesData from './holes.json';
 import { createGeo } from './geo.js';
 import { buildWorld } from './world.js';
+import { makeBriefingData, analyzeHole } from './briefing.js';
 
 const EXAG = 1.6; // lichte verticale overdrijving: Bossenstein is vlak (8–23 m)
 const STORE_KEY = 'bossenstein.holes.v1';
@@ -32,6 +33,11 @@ function groundY(x, z) {
   const v = (h(i, j) * (1 - tx) + h(i + 1, j) * tx) * (1 - tz) + (h(i, j + 1) * (1 - tx) + h(i + 1, j + 1) * tx) * tz;
   return (v - H0) * EXAG;
 }
+const realHeight = (x, z) => groundY(x, z) / EXAG + H0; // echte meters TAW
+
+// hindernissen (water uit OSM, bunkers herkend op de luchtfoto) voor de hole-briefing
+const hazards = await (await fetch('/data/' + meta.hazards)).json();
+const briefingData = makeBriefingData(meta, hazards);
 
 // ---------- scene ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -149,10 +155,7 @@ function renderHoles() {
         new THREE.MeshBasicMaterial({ color: active ? '#e8c547' : '#ffffff', transparent: true, opacity: active ? 0.95 : 0.45 })
       );
       holeGroup.add(tube);
-      if (active) {
-        const mid = pts[Math.floor(pts.length / 2)].clone(); mid.y += 6;
-        holeGroup.add(label(`${Math.round(holeLength(h))} m gemeten`, '', mid));
-      }
+      if (active) addBriefingMarkers(h);
     }
     (h.via || []).forEach((p) => {
       if (!active) return;
@@ -163,8 +166,48 @@ function renderHoles() {
   updatePanel();
 }
 
+// afstandspaaltjes langs de lijn + labels bij de hindernissen van de actieve hole
+function addBriefingMarkers(h) {
+  const a = analyzeHole({ hole: h, geo, data: briefingData, realHeight, me });
+  if (!a) return;
+  const P = a.path;
+  const at = (s) => { // punt op afstand s langs de lijn
+    let rest = s;
+    for (let i = 1; i < P.length; i++) {
+      const [ax, az] = P[i - 1], [bx, bz] = P[i], len = Math.hypot(bx - ax, bz - az);
+      if (rest <= len || i === P.length - 1) { const t = Math.min(1, rest / len); return [ax + (bx - ax) * t, az + (bz - az) * t]; }
+      rest -= len;
+    }
+  };
+  for (let s = 50; s < a.L - 25; s += 50) {
+    const [x, z] = at(s), y = groundY(x, z);
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 2.4, 8), new THREE.MeshStandardMaterial({ color: s % 100 ? '#ffffff' : '#e8c547' }));
+    post.position.set(x, y + 1.2, z); holeGroup.add(post);
+    if (s % 100 === 0 || a.L < 230) holeGroup.add(label(`${s}`, 'dist', new THREE.Vector3(x, y + 4, z)));
+  }
+  for (const it of a.items) {
+    const [cx, cz] = it.c;
+    const near = it.atGreen ? `green ${it.greenPos || ''}`.trim() : it.side === 'dwars' && it.kind === 'water' ? `carry ${Math.round(it.sMax - a.s0)}` : `${Math.round(it.sMin - a.s0)} m`;
+    holeGroup.add(label(`${it.kind === 'water' ? '💧' : '⛱'} ${near}`, it.kind === 'water' ? 'hz water' : 'hz sand', new THREE.Vector3(cx, groundY(cx, cz) + 5, cz)));
+  }
+}
+
+function renderBriefing(h) {
+  const el = $('briefing');
+  const a = analyzeHole({ hole: h, geo, data: briefingData, realHeight, me });
+  if (!a) { el.innerHTML = '<p class="muted">Teken tee en green in om de briefing te zien.</p>'; return; }
+  const row = (r) => `<li class="${r.tone || ''}"><span class="ic">${r.icon}</span><span>${r.text}${r.sub ? `<small>${r.sub}</small>` : ''}</span></li>`;
+  el.innerHTML = `
+    <div class="b-head"><strong>Hole-briefing</strong><span>${a.stars ? '★'.repeat(a.stars) + '☆'.repeat(5 - a.stars) : ''}</span></div>
+    <p class="muted">${a.fromMe ? `Afstanden vanaf jouw positie (nog ${Math.round(a.L - a.s0)} m)` : `Afstanden vanaf de tee · ${Math.round(a.L)} m langs de speellijn`}</p>
+    ${a.lines.length ? `<ul>${a.lines.map(row).join('')}</ul>` : '<p class="muted">Geen water of bunkers in de speellijn.</p>'}
+    <div class="b-sub">Rond de green</div><ul>${a.green.map(row).join('')}</ul>
+    <div class="b-sub">Speltips</div><ul class="tips">${a.tips.map((t) => `<li>${t}</li>`).join('')}</ul>`;
+}
+
 function updatePanel() {
   const h = holes[current];
+  renderBriefing(h);
   $('hole-no').textContent = h.no;
   $('hole-par').textContent = h.par ?? '–';
   $('hole-si').textContent = h.si ?? '–';
